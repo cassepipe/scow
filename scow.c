@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 
 /*
@@ -31,7 +32,15 @@ int main(int argc, char *argv[])
 			return (1);
 	}
 
-	char *src = argv[--argc];
+	char *path = argv[--argc];
+	int	path_len = strlen(path);
+	if (path[path_len] == '/')
+		path[path_len] = '\0';
+
+	char src[256];
+	char *sep = strrchr(path, '/');
+	strcpy(src, sep + 1);
+
 
 	char dest[1000];
 	strcpy(dest, getenv("HOME"));
@@ -41,17 +50,23 @@ int main(int argc, char *argv[])
 	strcpy(new_link, dest);
 	strcat(new_link, src);
 
-	struct stat sb;
+	printf("src is %s\n", src);
+	printf("newlink is %s\n", new_link);
+	printf("path is %s\n", path);
+	//struct stat sb;
 
 	if (mkdir(dest, 0700) < 0)
 	{
 		fprintf(stderr, "mkdir() : %s\n", strerror(errno));
 	}
-	if (link(src, new_link) < 0)
+	if (link(path, new_link) < 0)
 	{
 		fprintf(stderr, "link() : %s\n", strerror(errno));
 		return 1;
 	}
+
+	*sep = '\0';
+
 	return  (0);
 }
 
