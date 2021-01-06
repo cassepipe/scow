@@ -26,6 +26,8 @@
 ** Scow is licensed under GPL3 .
 */
 
+void replicate_dir_structure(char *path, char *dest);
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -35,13 +37,47 @@ int main(int argc, char *argv[])
 	}
 
 	char *path = argv[--argc];
+	int	path_len = strlen(path);
+	if (path[path_len] == '/')
+		path[path_len] = '\0';
+
+	char src[256];
+	char *sep = strrchr(path, '/');
+	strcpy(src, sep + 1);
+
 
 	char dest[1000];
 	strcpy(dest, getenv("HOME"));
 	strcat(dest, "/dotfiles/");
 
-	mkdir(dest, 0700);
-	execl("/bin/cp", "-l", "-r", path, dest, (char*)0);
+	char new_link[1000];
+	strcpy(new_link, dest);
+	strcat(new_link, src);
+
+//	struct stat sb;
+
+	if (mkdir(dest, 0700) < 0)
+	{
+		fprintf(stderr, "mkdir() : %s\n", strerror(errno));
+	}
+	if (link(path, new_link) < 0)
+	{
+		fprintf(stderr, "link() : %s\n", strerror(errno));
+		return 1;
+	}
+
+	*sep = '\0';
 
 	return  (0);
 }
+
+/*void replicate_dir_structure(char *path, char *dest)*/
+/*{*/
+	/*char *sep = strrchr(path, '/');*/
+	/*for each dir*/
+		/*create dir*/
+	/*for each directory*/
+	/*{*/
+		/*replicate_dir_structure(dirname(path));*/
+	/*}*/
+/*}*/
