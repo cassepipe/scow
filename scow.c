@@ -26,13 +26,30 @@
 ** Scow is licensed under GPL3 .
 */
 
-int main(int argc, char *argv[])
+typedef enum e_mode {
+	COLLECT,
+	DEPLOY,
+	TAKEOFF,
+	ERROR,
+} e_mode;
+
+e_mode check_args(int argc, char **argv)
 {
-	if (argc < 2)
+	if (argc < 2 )
 	{
 			fprintf(stderr, "You must provide a file name\n");
-			return (1);
+			return (ERROR);
 	}
+	if (strcmp(argv[1], "deploy") <
+
+	return (COLLECT);
+}
+
+int main(int argc, char *argv[])
+{
+	e_mode mode;
+
+	mode = check_args(argc, argv);
 
 	char *path = argv[--argc];
 
