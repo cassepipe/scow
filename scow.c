@@ -52,14 +52,13 @@ e_mode parse_mode();
 
 void replicate_dir_structure();
 
-int link_and_record_path_rec(const char *path_arg, const char *dotfiles_path)
+int link_and_record_path_rec(char *path, char *dotfiles_path)
 {
-	t_sds path;
 	t_sds new_link;
-	char *sep;
+	char *file_name;
 	DIR *dir_path_stream;
 
-	path = sdsnew(path_arg);
+	path = sdsnew(path);
 	dotfiles_path = sdsnew(dotfiles_path);
 
 	dir_path_stream = opendir(path);
@@ -67,8 +66,9 @@ int link_and_record_path_rec(const char *path_arg, const char *dotfiles_path)
 	{
 		if (path[sdslen(path) - 1] == '/')
 			path[sdslen(path) - 1] = 0;
-		sep = strrchr(path, '/');
-		new_link = sdscat(dotfiles_path, ++sep);
+		file_name = strrchr(path, '/');
+		new_link = sdsnew(dotfiles_path);
+		new_link = sdscat(new_link, ++file_name);
 
 		if (link(path, new_link) < 0)
 		{
@@ -83,41 +83,37 @@ int link_and_record_path_rec(const char *path_arg, const char *dotfiles_path)
 	}
 	else
 	{
-		replicate_dir_structure(path, target_path);
+		replicate_dir_structure(path, dotfiles_path);
 	}
 	return  (0);
 }
 
-void replicate_dir_structure(t_sds dir_path, const char *target_path)
+void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;
 	struct dirent *dir_entry;
 	t_sds item_path;
-	t_sds dest_path;
+	t_sds new_item_path;
 
-	dest_path = sdsnew(target_path);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
+		item_path = sdsdup(dir_path);
+		new_item_path = sdsdup(dest_path);
+		item_path = sdscat(item_path, dir_entry->d_name);
+		new_item_path = sdscat(new_item_path, dir_entry->d_name);
 		if (dir_entry->d_type == DT_DIR)
 		{
-			item_path = sdscat(dest_path, dir_entry->d_name);
-			mkdir(item_path, 0777);
+			mkdir(new_item_path, 0777);
+			replicate_dir_structure(item_path, new_item_path);
 		}
-	}
-	sdsfree(item_path);
-	item_path = sdsdup(dir_path);
-	rewinddir(dir_path_stream);
-	while ((dir_entry = readdir(dir_path_stream)) != NULL)
-	{
-		if (dir_entry->d_type == DT_DIR)
+		else
 		{
-			item_path = sdscat(item_path, dir_entry->d_name);
-			replicate_dir_structure(item_path, target_path);
+			link(item_path, new_item_path);
 		}
+		sdsfree(item_path);
+		sdsfree(new_item_path);
 	}
-	sdsfree(item_path);
-	sdsfree(dest_path);
 	closedir(dir_path_stream);
 }
 
