@@ -30,7 +30,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "sds.h"
+#include "sds/sds.h"
+#include "sds/sdsalloc.h"
 
 typedef enum e_mode {
 	COLLECT,
