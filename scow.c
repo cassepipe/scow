@@ -101,6 +101,7 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	else if (errno == ENOENT)
 	{
 		perror("Error ");
+		return (1);
 	}
 	else
 	{
@@ -108,6 +109,7 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 		replicate_dir_structure(item_path, dotfiles_path);
 	}
 	sdsfree(item_path);
+	closedir(dir_path_stream);
 	return  (0);
 }
 
@@ -119,13 +121,6 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 	t_sds new_item_path;
 
 	dir_path_stream = opendir(dir_path);
-	puts("Opening :");
-	puts(dir_path);
-	if(!dir_path_stream)
-	{
-		perror(dir_path);
-		exit(1);
-	}
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
 		item_path = sdsdup(dir_path);
@@ -140,12 +135,12 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 			mkdir(new_item_path, 0777);
 			item_path = sdscat(item_path, "/");
 			new_item_path = sdscat(new_item_path, "/");
-			printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
+			//printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
 			replicate_dir_structure(item_path, new_item_path);
 		}
 		else
 		{
-			printf("link(%s, %s)\n", item_path, new_item_path);
+			//printf("link(%s, %s)\n", item_path, new_item_path);
 			link(item_path, new_item_path);
 		}
 		sdsfree(item_path);
