@@ -30,6 +30,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include <limits.h>
 
 #include "sds/sds.h"
 #include "sds/sdsalloc.h"
@@ -64,16 +66,39 @@ int backup_path(char* lol)
 {
 	return 1;
 }
+
+int record_path(char *, char*);
+
 e_mode parse_mode(char *mode);
 
 void replicate_dir_structure();
 
+int record_path( t_sds path_to_record, t_sds link_name)
+{
+	int fd;
+	int ret;
+	t_sds filename;
+
+	filename = sdsnew(".");
+	filename = sdscatsds(filename, link_name);
+	filename = sdscat(filename, ".scow");
+	puts("hello !!!!");
+
+	fd = creat(filename, 0777);
+	if (fd < 0)
+		return -1;
+	ret = write(fd, path_to_record, sdslen(path_to_record));
+	close(fd);
+	return fd;
+}
+
+
 int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 {
-	t_sds new_link;
 	DIR *dir_path_stream;
-	t_sds item_path;
 	char *cwd;
+	t_sds item_path;
+	t_sds new_link;
 
 	if (item[0] != '/')
 	{
@@ -91,11 +116,7 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	{
 		new_link = sdsdup(dotfiles_path);
 		new_link = sdscat(new_link, item);
-
-		if (link(item_path, new_link) < 0)
-		{
-			fprintf(stderr, "link() : %s\n", strerror(errno));
-		}
+		link(item_path, new_link);
 		sdsfree(new_link);
 	}
 	else if (errno == ENOENT)
@@ -135,13 +156,14 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 			mkdir(new_item_path, 0777);
 			item_path = sdscat(item_path, "/");
 			new_item_path = sdscat(new_item_path, "/");
-			//printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
+			printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
 			replicate_dir_structure(item_path, new_item_path);
 		}
 		else
 		{
-			//printf("link(%s, %s)\n", item_path, new_item_path);
+			printf("link(%s, %s)\n", item_path, new_item_path);
 			link(item_path, new_item_path);
+			record_path(item_path, new_item_path);
 		}
 		sdsfree(item_path);
 		sdsfree(new_item_path);
