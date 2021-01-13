@@ -6,7 +6,7 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/13 12:29:22 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/13 12:36:24 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,10 +39,13 @@ all:			${NAME}
 
 ${NAME}:		${OBJECTFILES} ${HEADERS}
 
-obj/%.o:		%.c Makefile | obj
+obj/%.o:		%.c Makefile | obj obj/sds
 				${CC} ${CFLAGS} -c $< -o $@
 obj:
 				mkdir obj
+
+obj/sds			: | obj
+				mkdir obj/sds
 clean:			
 				rm -rf obj
 				rm -rf ~/.dotfiles
