@@ -80,7 +80,7 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 		cwd = getcwd(NULL, 0);
 		item_path = sdsnew(cwd);
 		free(cwd);
-		item_path = sdscat(item_path, "//");
+		item_path = sdscat(item_path, "/");
 		item_path = sdscat(item_path, item);
 	}
 	else
@@ -89,8 +89,6 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	dir_path_stream = opendir(item);
 	if (errno == ENOTDIR)
 	{
-		if (item_path[sdslen(item_path) - 1] == '/')
-			item_path[sdslen(item_path) - 1] = 0;
 		new_link = sdsdup(dotfiles_path);
 		new_link = sdscat(new_link, item);
 
@@ -106,6 +104,7 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	}
 	else
 	{
+		item_path = sdscat(item_path, "/");
 		replicate_dir_structure(item_path, dotfiles_path);
 	}
 	sdsfree(item_path);
@@ -116,13 +115,15 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;
 	struct dirent *dir_entry;
-	t_sds item_path;
-	t_sds new_item_path;
+	t_sds item_path = NULL;
+	t_sds new_item_path = NULL;
 
 	dir_path_stream = opendir(dir_path);
+	puts("Opening :");
+	puts(dir_path);
 	if(!dir_path_stream)
 	{
-		perror("Error ");
+		perror(dir_path);
 		exit(1);
 	}
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
@@ -131,9 +132,15 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 		new_item_path = sdsdup(dest_path);
 		item_path = sdscat(item_path, dir_entry->d_name);
 		new_item_path = sdscat(new_item_path, dir_entry->d_name);
-		if (dir_entry->d_type == DT_DIR)
+		if (dir_entry->d_name[0] == '.')
+		{
+				if (dir_entry->d_name[1] == '.' || dir_entry->d_name[1] == '\0')
+					;
+		}
+		else if (dir_entry->d_type == DT_DIR)
 		{
 			mkdir(new_item_path, 0777);
+			item_path = sdscat(item_path, "/");
 			replicate_dir_structure(item_path, new_item_path);
 		}
 		else

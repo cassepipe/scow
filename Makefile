@@ -6,7 +6,7 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/13 15:54:52 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/13 17:46:54 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,9 +25,12 @@ HEADERS			=	sds/sds.h \
 CFLAGS			=	-Wall -Wextra 
 
 
-ifeq ($(DEBUG), true)
+ifeq ($(DEBUG), 1)
 	CFLAGS 			+=	 -g3
-	#LDFLAGS			=	-fsanitize=address
+endif
+ifeq ($(DEBUG), 2)
+	CFLAGS 			+=	 -g3
+	LDFLAGS			=	-fsanitize=address
 endif
 
 CC	  		  	= 	clang
