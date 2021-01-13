@@ -115,8 +115,8 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;
 	struct dirent *dir_entry;
-	t_sds item_path = NULL;
-	t_sds new_item_path = NULL;
+	t_sds item_path;
+	t_sds new_item_path;
 
 	dir_path_stream = opendir(dir_path);
 	puts("Opening :");
@@ -132,19 +132,20 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 		new_item_path = sdsdup(dest_path);
 		item_path = sdscat(item_path, dir_entry->d_name);
 		new_item_path = sdscat(new_item_path, dir_entry->d_name);
-		if (dir_entry->d_name[0] == '.')
-		{
-				if (dir_entry->d_name[1] == '.' || dir_entry->d_name[1] == '\0')
+		if (dir_entry->d_name[0] == '.'
+				&& (dir_entry->d_name[1] == '.' || dir_entry->d_name[1] == '\0'))
 					;
-		}
 		else if (dir_entry->d_type == DT_DIR)
 		{
 			mkdir(new_item_path, 0777);
 			item_path = sdscat(item_path, "/");
+			new_item_path = sdscat(new_item_path, "/");
+			printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
 			replicate_dir_structure(item_path, new_item_path);
 		}
 		else
 		{
+			printf("link(%s, %s)\n", item_path, new_item_path);
 			link(item_path, new_item_path);
 		}
 		sdsfree(item_path);
