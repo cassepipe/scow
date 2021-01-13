@@ -120,6 +120,11 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 	t_sds new_item_path;
 
 	dir_path_stream = opendir(dir_path);
+	if(!dir_path_stream)
+	{
+		perror("Error ");
+		exit(1);
+	}
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
 		item_path = sdsdup(dir_path);
