@@ -6,7 +6,7 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/13 12:36:24 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/13 15:54:52 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,8 +24,10 @@ HEADERS			=	sds/sds.h \
 	
 CFLAGS			=	-Wall -Wextra 
 
+
 ifeq ($(DEBUG), true)
-	CFLAGS += -g -fsanitize=address
+	CFLAGS 			+=	 -g3
+	#LDFLAGS			=	-fsanitize=address
 endif
 
 CC	  		  	= 	clang
@@ -38,8 +40,9 @@ NAME			=	a.out
 all:			${NAME}
 
 ${NAME}:		${OBJECTFILES} ${HEADERS}
+				${CC} ${LDFLAGS} ${OBJECTFILES}
 
-obj/%.o:		%.c Makefile | obj obj/sds
+obj/%.o:		%.c | obj obj/sds
 				${CC} ${CFLAGS} -c $< -o $@
 obj:
 				mkdir obj

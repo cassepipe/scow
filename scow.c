@@ -19,6 +19,7 @@
 */
 
 #define _DEFAULT_SOURCE
+#define prints(string)	do { printf("%s\n", (string)); } while (0)
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -42,50 +43,72 @@ typedef enum e_mode {
 
 typedef sds t_sds;
 
-int in_in_set();
+int in_in_set()
+{
+	return 1;
+}
 int link_and_record_path_rec();
-int deploy_links_from_paths_backup();
-int deploy_links_from_paths();
-int restore_from_backup();
-int is_dir();
-int backup_path();
-e_mode parse_mode();
+int deploy_links_from_paths_backup(char* lol)
+{
+	return 1;
+}
+int deploy_links_from_paths(char* lol)
+{
+	return 1;
+}
+int restore_from_backup(char* lol)
+{
+	return 1;
+}
+int backup_path(char* lol)
+{
+	return 1;
+}
+e_mode parse_mode(char *mode);
 
 void replicate_dir_structure();
 
-int link_and_record_path_rec(char *path, char *dotfiles_path)
+int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 {
 	t_sds new_link;
-	char *file_name;
 	DIR *dir_path_stream;
+	t_sds item_path;
+	char *cwd;
 
-	path = sdsnew(path);
-	dotfiles_path = sdsnew(dotfiles_path);
+	if (item[0] != '/')
+	{
+		cwd = getcwd(NULL, 0);
+		item_path = sdsnew(cwd);
+		free(cwd);
+		item_path = sdscat(item_path, "//");
+		item_path = sdscat(item_path, item);
+	}
+	else
+		item_path = sdsnew(item);
 
-	dir_path_stream = opendir(path);
+	dir_path_stream = opendir(item);
 	if (errno == ENOTDIR)
 	{
-		if (path[sdslen(path) - 1] == '/')
-			path[sdslen(path) - 1] = 0;
-		file_name = strrchr(path, '/');
-		new_link = sdsnew(dotfiles_path);
-		new_link = sdscat(new_link, ++file_name);
+		if (item_path[sdslen(item_path) - 1] == '/')
+			item_path[sdslen(item_path) - 1] = 0;
+		new_link = sdsdup(dotfiles_path);
+		new_link = sdscat(new_link, item);
 
-		if (link(path, new_link) < 0)
+		if (link(item_path, new_link) < 0)
 		{
 			fprintf(stderr, "link() : %s\n", strerror(errno));
-			return 1;
 		}
 		sdsfree(new_link);
 	}
 	else if (errno == ENOENT)
 	{
-		perror("Error :");
+		perror("Error ");
 	}
 	else
 	{
-		replicate_dir_structure(path, dotfiles_path);
+		replicate_dir_structure(item_path, dotfiles_path);
 	}
+	sdsfree(item_path);
 	return  (0);
 }
 
@@ -118,7 +141,7 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 	closedir(dir_path_stream);
 }
 
-e_mode parse_args(int argc, char *mode)
+e_mode parse_mode(char *mode)
 {
 	char *deploy = "deploy";
 	char *invade = "invade";
@@ -150,7 +173,7 @@ int  main(int argc, char *argv[])
 			return (1);
 	}
 	if (argc > 2)
-		mode = parse_mode(argc, argv[2]);
+		mode = parse_mode(argv[2]);
 
 	//get dotfiles directory path
 	dotfiles_path = sdsnew(getenv("HOME"));
