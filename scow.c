@@ -73,7 +73,7 @@ e_mode parse_mode(char *mode);
 
 void replicate_dir_structure();
 
-int record_path( t_sds path_to_record, t_sds link_path)
+int record_path( t_sds path_to_record, t_sds location)
 {
 	int fd;
 	int ret;
@@ -81,11 +81,12 @@ int record_path( t_sds path_to_record, t_sds link_path)
 	char *sep;
 	char *backupfile_path;
 
-	sep = strrchr(link_path, '/');
+	sep = strrchr(path_to_record, '/');
 	filename = sdsnew(".");
 	filename = sdscat(filename, ++sep);
 	filename = sdscat(filename, ".scow");
-	backupfile_path = sdsnewlen(link_path, sep - link_path);
+	backupfile_path = sdsdup(location);
+	backupfile_path = sdscat(backupfile_path, "/");
 	backupfile_path = sdscatsds(backupfile_path, filename);
 	sdsfree(filename);
 
@@ -93,7 +94,6 @@ int record_path( t_sds path_to_record, t_sds link_path)
 	if (fd < 0)
 	{
 		fprintf(stderr, "%s : %s\n", backupfile_path, strerror(errno));
-		return -1;
 	}
 	ret = write(fd, path_to_record, sdslen(path_to_record));
 	close(fd);
@@ -143,6 +143,29 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	return  (0);
 }
 
+void ask_for_removal(char *file_path)
+{
+	int ret;
+
+	fprintf(stderr, "A file with the name %s already exists.\n"
+			"Do you want to overwrite it ? (y or n)",
+			file_path);
+	while (!(ret = getchar()))
+		;
+	if (ret == 'y')
+		ret = remove(file_path);
+	if (ret == -1)
+	{
+		fprintf(stderr, "Could not overwrite the file. Continue anyways ? (y or n)");
+		while (!(ret = getchar()))
+			;
+	}
+	if (ret == 'y')
+		return;
+	else
+		exit(0);
+}
+
 void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;
@@ -165,14 +188,16 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 			mkdir(new_item_path, 0777);
 			item_path = sdscat(item_path, "/");
 			new_item_path = sdscat(new_item_path, "/");
-			printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
+			//printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
 			replicate_dir_structure(item_path, new_item_path);
 		}
 		else
 		{
-			printf("link(%s, %s)\n", item_path, new_item_path);
+			//printf("link(%s, %s)\n", item_path, new_item_path);
+			if (access(new_item_path, F_OK) == 0)
+				ask_for_removal(new_item_path);
 			link(item_path, new_item_path);
-			record_path(item_path, new_item_path);
+			record_path(item_path, dest_path);
 		}
 		sdsfree(item_path);
 		sdsfree(new_item_path);

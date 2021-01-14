@@ -6,7 +6,7 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/14 15:31:17 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/14 20:28:31 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,8 +65,9 @@ dotfiles_clean:
 
 run:			dotfiles_clean	
 				./${NAME} lol
+rerun:
+				./${NAME} lol
 see:			
-				ls -a ~/.dotfiles
-				ls -a ~/.dotfiles/hola
+				ls -a -R --color  ~/.dotfiles
 
 .PHONY:			${PHONY}	
