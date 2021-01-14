@@ -102,13 +102,14 @@ int record_path( t_sds path_to_record, t_sds location)
 }
 
 
-int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
+int setup_collect(const char *item, t_sds dotfiles_path)
 {
 	DIR *dir_path_stream;
 	char *cwd;
 	t_sds item_path;
 	t_sds new_link;
 
+	//Create an absolute path for the item
 	if (item[0] != '/')
 	{
 		cwd = getcwd(NULL, 0);
@@ -141,6 +142,26 @@ int link_and_record_path_rec(const char *item, t_sds dotfiles_path)
 	sdsfree(item_path);
 	closedir(dir_path_stream);
 	return  (0);
+}
+
+t_sds sdsdupcat( t_sds to_dup, const char* to_cat)
+{
+	t_sds ret;
+
+	ret = sdsdup(to_dup);
+	ret = sdscat(ret, to_cat);
+
+	return ret;
+}
+
+t_sds sdsdupcatsds( t_sds to_dup, t_sds to_cat)
+{
+	t_sds ret;
+
+	ret = sdsdup(to_dup);
+	ret = sdscatsds(ret, to_cat);
+
+	return ret;
 }
 
 void ask_for_removal(char *file_path)
@@ -224,6 +245,17 @@ e_mode parse_mode(char *mode)
 	return COLLECT;
 }
 
+t_sds create_dotfiles_dir()
+{
+	t_sds dotfiles_path;
+
+	dotfiles_path = sdsnew(getenv("HOME"));
+	dotfiles_path = sdscat(dotfiles_path, "/.dotfiles/");
+	mkdir(dotfiles_path, 0777);
+
+	return dotfiles_path;
+}
+
 int  main(int argc, char *argv[])
 {
 	e_mode	mode;
@@ -239,17 +271,14 @@ int  main(int argc, char *argv[])
 	if (argc > 2)
 		mode = parse_mode(argv[2]);
 
-	//get dotfiles directory path
-	dotfiles_path = sdsnew(getenv("HOME"));
-	dotfiles_path = sdscat(dotfiles_path, "/.dotfiles/");
-	mkdir(dotfiles_path, 0777);
+	dotfiles_path = create_dotfiles_dir();
 
 	//dispatch
 	--argc;
 	switch (mode)
 	{
 		case COLLECT:
-			link_and_record_path_rec(argv[argc], dotfiles_path);
+			setup_collect(argv[argc], dotfiles_path);
 			break;
 		case DEPLOY:
 			deploy_links_from_paths_backup(argv[argc]);
