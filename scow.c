@@ -89,7 +89,11 @@ int setup_collect(const char *item, t_sds dotfiles_path)
 	{
 		new_link = sdsdup(dotfiles_path);
 		new_link = sdscat(new_link, item);
+		if (access(new_link, F_OK) == 0)
+			ask_for_removal(new_link);
+		puts("linking...");
 		link(item_path, new_link);
+		record_path(item_path, dotfiles_path);
 		sdsfree(new_link);
 	}
 	else if (errno == ENOENT)
@@ -100,7 +104,7 @@ int setup_collect(const char *item, t_sds dotfiles_path)
 	else
 	{
 		item_path = sdscat(item_path, "/");
-		replicate_dir_structure(item_path, dotfiles_path);
+		link_rec(item_path, dotfiles_path);
 	}
 	sdsfree(item_path);
 	closedir(dir_path_stream);
@@ -134,23 +138,23 @@ void ask_for_removal(char *file_path)
 	fprintf(stderr, "A file with the name %s already exists.\n"
 			"Do you want to overwrite it ? (y or n)",
 			file_path);
-	while (!(ret = getchar()))
+	ret = getchar();
 		;
 	if (ret == 'y')
+	{
+		puts("removing...");
 		ret = remove(file_path);
+	}
 	if (ret == -1)
 	{
 		fprintf(stderr, "Could not overwrite the file. Continue anyways ? (y or n)");
-		while (!(ret = getchar()))
-			;
+		ret = getchar();
+		if (ret != 'y')
+			exit(0);
 	}
-	if (ret == 'y')
-		return;
-	else
-		exit(0);
 }
 
-void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
+void link_rec(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;
 	struct dirent *dir_entry;
@@ -173,7 +177,7 @@ void replicate_dir_structure(const t_sds dir_path, const t_sds dest_path)
 			item_path = sdscat(item_path, "/");
 			new_item_path = sdscat(new_item_path, "/");
 			//printf("replicate_dir_structure(%s, %s)\n", item_path, new_item_path);
-			replicate_dir_structure(item_path, new_item_path);
+			link_rec(item_path, new_item_path);
 		}
 		else
 		{
@@ -255,6 +259,4 @@ int  main(int argc, char *argv[])
 	}
 	sdsfree(dotfiles_path);
 }
-
-
 
