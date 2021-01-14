@@ -6,7 +6,7 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/13 17:46:54 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/14 15:31:17 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,11 +54,19 @@ obj/sds			: | obj
 				mkdir obj/sds
 clean:			
 				rm -rf obj
-				rm -rf ~/.dotfiles
 
 fclean:			clean
 				rm -rf ${NAME}
 
-re:				fclean all
+re:				fclean dotfiles_clean all 
+
+dotfiles_clean:
+				rm -rf ~/.dotfiles
+
+run:			dotfiles_clean	
+				./${NAME} lol
+see:			
+				ls -a ~/.dotfiles
+				ls -a ~/.dotfiles/hola
 
 .PHONY:			${PHONY}	

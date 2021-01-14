@@ -19,7 +19,7 @@
 */
 
 #define _DEFAULT_SOURCE
-#define prints(string)	do { printf("%s\n", (string)); } while (0)
+#define prints(string)	do { printf(#string " : %s\n", (string)); } while (0)
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -73,22 +73,31 @@ e_mode parse_mode(char *mode);
 
 void replicate_dir_structure();
 
-int record_path( t_sds path_to_record, t_sds link_name)
+int record_path( t_sds path_to_record, t_sds link_path)
 {
 	int fd;
 	int ret;
 	t_sds filename;
+	char *sep;
+	char *backupfile_path;
 
+	sep = strrchr(link_path, '/');
 	filename = sdsnew(".");
-	filename = sdscatsds(filename, link_name);
+	filename = sdscat(filename, ++sep);
 	filename = sdscat(filename, ".scow");
-	puts("hello !!!!");
+	backupfile_path = sdsnewlen(link_path, sep - link_path);
+	backupfile_path = sdscatsds(backupfile_path, filename);
+	sdsfree(filename);
 
-	fd = creat(filename, 0777);
+	fd = creat(backupfile_path, S_IRWXU);
 	if (fd < 0)
+	{
+		fprintf(stderr, "%s : %s\n", backupfile_path, strerror(errno));
 		return -1;
+	}
 	ret = write(fd, path_to_record, sdslen(path_to_record));
 	close(fd);
+	sdsfree(backupfile_path);
 	return fd;
 }
 
