@@ -18,38 +18,8 @@
 ** Scow is licensed under GPL3 .
 */
 
-#define _DEFAULT_SOURCE
-#define prints(string)	do { printf(#string " : %s\n", (string)); } while (0)
+#include "scow.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <stdio.h>
-#include <libgen.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <limits.h>
-
-#include "sds/sds.h"
-#include "sds/sdsalloc.h"
-
-typedef enum e_mode {
-	COLLECT,
-	DEPLOY,
-	INVADE,
-	TAKEOFF,
-} e_mode;
-
-typedef sds t_sds;
-
-int in_in_set()
-{
-	return 1;
-}
-int link_and_record_path_rec();
 int deploy_links_from_paths_backup(char* lol)
 {
 	return 1;
@@ -66,12 +36,6 @@ int backup_path(char* lol)
 {
 	return 1;
 }
-
-int record_path(char *, char*);
-
-e_mode parse_mode(char *mode);
-
-void replicate_dir_structure();
 
 int record_path( t_sds path_to_record, t_sds location)
 {
@@ -100,7 +64,6 @@ int record_path( t_sds path_to_record, t_sds location)
 	sdsfree(backupfile_path);
 	return fd;
 }
-
 
 int setup_collect(const char *item, t_sds dotfiles_path)
 {
