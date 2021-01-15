@@ -1,9 +1,3 @@
-#ifndef SCOW_H
-	#define SCOW_H
-
-#define _DEFAULT_SOURCE
-#define prints(string)	do { printf(#string " : %s\n", (string)); } while (0)
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -15,33 +9,34 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <ctype.h>
 
 #include "sds/sds.h"
 #include "sds/sdsalloc.h"
 
-typedef enum e_mode {
+#define _GNU_SOURCE
+
+
+typedef sds t_sds;
+
+t_sds create_dotfiles_dir();
+
+enum e_mode {
+	DEFAULT = 0,	
 	COLLECT,
 	DEPLOY,
 	INVADE,
 	TAKEOFF,
-} e_mode;
+};
 
-typedef sds t_sds;
+typedef enum e_mode e_mode;
 
-
-t_sds create_dotfiles_dir();
-void ask_for_removal(char *file_path);
-t_sds sdsdupcatsds(t_sds to_dup,t_sds to_cat);
+/*FUNCTIONS*/
+int record_path(t_sds path_to_record,t_sds location);
+int setup_collect(char **items,int number_of_items,t_sds dotfiles_path);
 t_sds sdsdupcat(t_sds to_dup,const char *to_cat);
-int setup_collect(const char *item,t_sds dotfiles_path);
+t_sds sdsdupcatsds(t_sds to_dup,t_sds to_cat);
+void ask_for_removal(char *file_path);
 void link_rec(const t_sds dir_path,const t_sds dest_path);
 e_mode parse_mode(char *mode);
-e_mode parse_mode(char *mode);
-int record_path(char *,char *);
-int record_path(t_sds path_to_record,t_sds location);
-int backup_path(char *lol);
-int restore_from_backup(char *lol);
-int deploy_links_from_paths(char *lol);
-int deploy_links_from_paths_backup(char *lol);
-
-#endif
+t_sds create_dotfiles_dir();

@@ -1,4 +1,5 @@
 # **************************************************************************** #
+#                
 #                                                                              #
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
@@ -6,29 +7,28 @@
 #    By: tpouget <cassepipe@ymail.com>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/23 16:37:33 by tpouget           #+#    #+#              #
-#    Updated: 2021/01/14 20:28:31 by tpouget          ###   ########.fr        #
+#    Updated: 2021/01/15 15:45:54 by tpouget          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 #	Variables
 
-PHONY			=	all clean fclean re
+PHONY			=	all clean fclean re update see ctags
 
 SOURCEFILES		=	scow.c \
 					sds/sds.c
 
 OBJECTFILES		=	$(patsubst %.c,obj/%.o,$(SOURCEFILES))
 	
-HEADERS			=	sds/sds.h \
-					sds/sdsalloc.h
+HEADERFILES		=	$(patsubst %.c,%.h,$(SOURCEFILES)) \
 	
 CFLAGS			=	-Wall -Wextra 
 
 
-ifeq ($(DEBUG), 1)
+ifeq ($(DEBUG), debugger)
 	CFLAGS 			+=	 -g3
 endif
-ifeq ($(DEBUG), 2)
+ifeq ($(DEBUG), sanitizer)
 	CFLAGS 			+=	 -g3
 	LDFLAGS			=	-fsanitize=address
 endif
@@ -42,7 +42,7 @@ NAME			=	a.out
 
 all:			${NAME}
 
-${NAME}:		${OBJECTFILES} ${HEADERS}
+${NAME}:		${OBJECTFILES} ${HEADERFILES} update
 				${CC} ${LDFLAGS} ${OBJECTFILES}
 
 obj/%.o:		%.c | obj obj/sds
@@ -69,5 +69,11 @@ rerun:
 				./${NAME} lol
 see:			
 				ls -a -R --color  ~/.dotfiles
+ctags:
+				ctags ${SOURCEFILES}
+
+update:			ctags
+				sed -i '/FUNCTIONS/q' scow.h 
+				~/makeheaders/makeheaders -h scow.c | head -n -8 >> scow.h
 
 .PHONY:			${PHONY}	
