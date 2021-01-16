@@ -16,6 +16,7 @@
 
 #define _GNU_SOURCE
 
+#define BUFFER_SIZE 2048
 
 typedef sds t_sds;
 
@@ -32,11 +33,12 @@ enum e_mode {
 typedef enum e_mode e_mode;
 
 /*FUNCTIONS*/
-int record_path(t_sds path_to_record,t_sds location);
-int setup_collect(char **items,int number_of_items,t_sds dotfiles_path);
 t_sds sdsdupcat(t_sds to_dup,const char *to_cat);
 t_sds sdsdupcatsds(t_sds to_dup,t_sds to_cat);
+int record_path(t_sds path_to_record,t_sds location);
 void ask_for_removal(char *file_path);
 void link_rec(const t_sds dir_path,const t_sds dest_path);
+int setup_collect(char **items,int number_of_items,t_sds dotfiles_path);
 e_mode parse_mode(char *mode);
 t_sds create_dotfiles_dir();
+int setup_deploy(char **items,int number_of_items,t_sds dotfiles_path);

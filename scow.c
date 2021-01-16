@@ -1,6 +1,5 @@
 /*
  *  TODO :
- *  	- Handle multiple files
  *  	- Deploy = invade + backup (.old)
  *
  */
@@ -9,6 +8,25 @@
 
 #define _GNU_SOURCE
 
+t_sds sdsdupcat( t_sds to_dup, const char* to_cat)
+{
+	t_sds ret;
+
+	ret = sdsdup(to_dup);
+	ret = sdscat(ret, to_cat);
+
+	return ret;
+}
+
+t_sds sdsdupcatsds( t_sds to_dup, t_sds to_cat)
+{
+	t_sds ret;
+
+	ret = sdsdup(to_dup);
+	ret = sdscatsds(ret, to_cat);
+
+	return ret;
+}
 
 int record_path( t_sds path_to_record, t_sds location)
 {
@@ -32,79 +50,10 @@ int record_path( t_sds path_to_record, t_sds location)
 	{
 		fprintf(stderr, "%s : %s\n", backupfile_path, strerror(errno));
 	}
-	ret = write(fd, path_to_record, sdslen(path_to_record));
+	ret = write(fd, path_to_record, sdslen(path_to_record) + 1);
 	close(fd);
 	sdsfree(backupfile_path);
 	return fd;
-}
-
-int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
-{
-	DIR *dir_path_stream;
-	char *cwd;
-	t_sds item_path;
-	t_sds new_link;
-
-	while (number_of_items--)
-	{
-		//Create an absolute path for the item
-		if ((*items)[0] != '/')
-		{
-			cwd = getcwd(NULL, 0);
-			item_path = sdsnew(cwd);
-			free(cwd);
-			item_path = sdscat(item_path, "/");
-			item_path = sdscat(item_path, *items);
-		}
-		else
-			item_path = sdsnew(*items);
-
-		dir_path_stream = opendir(*items);
-		if (errno == ENOTDIR)
-		{
-			new_link = sdsdup(dotfiles_path);
-			new_link = sdscat(new_link, *items);
-			if (access(new_link, F_OK) == 0)
-				ask_for_removal(new_link);
-			link(item_path, new_link);
-			record_path(item_path, dotfiles_path);
-			sdsfree(new_link);
-		}
-		else if (errno == ENOENT)
-		{
-			perror("Error ");
-			return (1);
-		}
-		else
-		{
-			item_path = sdscat(item_path, "/");
-			link_rec(item_path, dotfiles_path);
-		}
-		sdsfree(item_path);
-		closedir(dir_path_stream);
-		items++;
-	}
-	return  (0);
-}
-
-t_sds sdsdupcat( t_sds to_dup, const char* to_cat)
-{
-	t_sds ret;
-
-	ret = sdsdup(to_dup);
-	ret = sdscat(ret, to_cat);
-
-	return ret;
-}
-
-t_sds sdsdupcatsds( t_sds to_dup, t_sds to_cat)
-{
-	t_sds ret;
-
-	ret = sdsdup(to_dup);
-	ret = sdscatsds(ret, to_cat);
-
-	return ret;
 }
 
 void ask_for_removal(char *file_path)
@@ -170,6 +119,55 @@ void link_rec(const t_sds dir_path, const t_sds dest_path)
 	closedir(dir_path_stream);
 }
 
+int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
+{
+	DIR *dir_path_stream;
+	char *cwd;
+	t_sds item_path;
+	t_sds new_link;
+
+	while (number_of_items--)
+	{
+		//Create an absolute path for the item
+		if ((*items)[0] != '/')
+		{
+			cwd = getcwd(NULL, 0);
+			item_path = sdsnew(cwd);
+			free(cwd);
+			item_path = sdscat(item_path, "/");
+			item_path = sdscat(item_path, *items);
+		}
+		else
+			item_path = sdsnew(*items);
+
+		dir_path_stream = opendir(*items);
+		if (errno == ENOTDIR)
+		{
+			new_link = sdsdup(dotfiles_path);
+			new_link = sdscat(new_link, *items);
+			if (access(new_link, F_OK) == 0)
+				ask_for_removal(new_link);
+			link(item_path, new_link);
+			record_path(item_path, dotfiles_path);
+			sdsfree(new_link);
+		}
+		else if (errno == ENOENT)
+		{
+			fprintf(stderr, "%s : %s\n", item_path, strerror(errno));
+			return (1);
+		}
+		else
+		{
+			item_path = sdscat(item_path, "/");
+			link_rec(item_path, dotfiles_path);
+		}
+		sdsfree(item_path);
+		closedir(dir_path_stream);
+		items++;
+	}
+	return  (0);
+}
+
 e_mode parse_mode(char *mode)
 {
 	char *deploy = "deploy";
@@ -201,6 +199,72 @@ t_sds create_dotfiles_dir()
 	mkdir(dotfiles_path, 0777);
 
 	return dotfiles_path;
+}
+
+int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path)
+{
+	DIR *dir_path_stream;
+	t_sds item_path;
+	t_sds scow_file;
+	char *filename;
+	char item_path_last_char;
+	int fd;
+	char new_link[BUFFER_SIZE];
+
+	while (number_of_items--)
+	{
+		if ((*items)[0] != '/')
+		{
+			//Create an absolute path with dotfiles_path for current item
+			item_path = sdsdup(dotfiles_path);
+			item_path = sdscat(item_path, *items);
+			//Remove trailing '/'
+			item_path_last_char = item_path[sdslen(item_path) - 1];
+			if (item_path_last_char == '/')
+				item_path_last_char = '\0';
+			//Get scow_file name
+			filename = strrchr(item_path,'/');
+			if (!filename)
+				filename = item_path;
+			scow_file = sdsnew(".");
+			scow_file = sdscat(scow_file, filename);
+			scow_file = sdscat(scow_file, ".scow");
+
+		}
+		else
+		{
+			fprintf(stderr, "You cannot provide an absolute path in _deploy_ mode.\n"
+							"Ignoring %s ...\n",
+							item_path);
+			sdsfree(item_path);
+			items++;
+			continue;
+		}
+		dir_path_stream = opendir(item_path);
+		if (errno == ENOTDIR)
+		{
+			fd = open(scow_file, O_RDONLY);
+			read(fd, new_link, BUFFER_SIZE);
+			if (access(new_link, F_OK) == 0)
+				ask_for_removal(new_link);
+			link(item_path, new_link);
+			sdsfree(new_link);
+		}
+		else if (errno == ENOENT)
+		{
+			fprintf(stderr, "%s : %s\n", item_path, strerror(errno));
+			return (1);
+		}
+		else
+		{
+			item_path = sdscat(item_path, "/");
+			link_rec(item_path, dotfiles_path);
+		}
+		sdsfree(item_path);
+		closedir(dir_path_stream);
+		items++;
+	}
+	return  (0);
 }
 
 int  main(int argc, char *argv[])
@@ -236,10 +300,10 @@ int  main(int argc, char *argv[])
 			setup_collect(argv, argc, dotfiles_path);
 			break;
 		case DEPLOY:
-			/*deploy_links_from_paths_backup(argc, argv);*/
+			setup_deploy(argv, argc, dotfiles_path);
 			break;
 		case INVADE:
-			/*deploy_links_from_paths(argc, argv);*/
+			/*deploy_links_overwrite(argc, argv);*/
 			break;
 		case TAKEOFF:
 			/*restore_from_backup(dotfiles_path);*/
