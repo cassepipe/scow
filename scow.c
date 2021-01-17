@@ -168,38 +168,6 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 	return  (0);
 }
 
-e_mode parse_mode(char *mode)
-{
-	char *deploy = "deploy";
-	char *invade = "invade";
-	char *takeoff = "takeoff";
-	char *collect = "collect";
-	int i;
-	int len;
-
-	i = 0;
-	len = strlen(mode);
-	if (!strncmp(mode, deploy, len))
-		return DEPLOY;
-	if (!strncmp(mode, invade, len))
-		return INVADE;
-	if (!strncmp(mode, takeoff, len))
-		return TAKEOFF;
-	if (!strncmp(mode, collect, len))
-		return COLLECT;
-	return DEFAULT;
-}
-
-t_sds create_dotfiles_dir()
-{
-	t_sds dotfiles_path;
-
-	dotfiles_path = sdsnew(getenv("HOME"));
-	dotfiles_path = sdscat(dotfiles_path, "/.dotfiles/");
-	mkdir(dotfiles_path, 0777);
-
-	return dotfiles_path;
-}
 
 int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path)
 {
@@ -265,6 +233,39 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path)
 		items++;
 	}
 	return  (0);
+}
+
+e_mode parse_mode(char *mode)
+{
+	char *deploy = "deploy";
+	char *invade = "invade";
+	char *takeoff = "takeoff";
+	char *collect = "collect";
+	int i;
+	int len;
+
+	i = 0;
+	len = strlen(mode);
+	if (!strncmp(mode, deploy, len))
+		return DEPLOY;
+	if (!strncmp(mode, invade, len))
+		return INVADE;
+	if (!strncmp(mode, takeoff, len))
+		return TAKEOFF;
+	if (!strncmp(mode, collect, len))
+		return COLLECT;
+	return DEFAULT;
+}
+
+t_sds create_dotfiles_dir()
+{
+	t_sds dotfiles_path;
+
+	dotfiles_path = sdsnew(getenv("HOME"));
+	dotfiles_path = sdscat(dotfiles_path, "/.dotfiles/");
+	mkdir(dotfiles_path, 0777);
+
+	return dotfiles_path;
 }
 
 int  main(int argc, char *argv[])

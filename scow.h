@@ -16,7 +16,9 @@
 
 #define _GNU_SOURCE
 
-#define BUFFER_SIZE 2048
+#ifndef BUFFER_SIZE
+	#define BUFFER_SIZE 2048
+#endif
 
 typedef sds t_sds;
 
