@@ -19,69 +19,57 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
 
  License is GPLv3 cause Linux saved my old computers from the trash and make the new one shine and because I feel like I owe a lot to the Free Softawre movement.
  
- How it (is supposed to) work
- ============================
-
+# How it (is supposed to) work
  There are four modes.
  Those are temporary names. Maybe I'll change them for load, unload, dump, sailaway or something related to scows.
 
- Collect mode
- ============
+## Collect mode
 `scow` takes a file and create a hard link in a `~/.dotfiles` directory or takes a directory and reproduces the directory structure recursively with hard links. 
  For each hard link that is created a hidden .scow file is also created alongside to store the path the original file came from.
 
- Deploy mode
- ===========
+## Deploy mode
  Deploy your dotfiles at the right spot by reading the hidden `.scow` files and make a backup if file already exist. If there is two or backup files, you should be
  prompted.
 
- Invade mode
- ===========
+##Invade mode
  Same as deploy mode but overwrite config files already present.
 
- Takeoff mode
- ============
+##Takeoff mode
  Restore files that were there before deployment.
 
- Usage
- ====
+#Usage
  ```
  scow [mode] file_or_dir  ...
  ```
 
- Why hard links and not copy ?
- =============================
+# Why hard links and not copy ?
 
  Because it allows to manage all dotfiles from `~/dotfiles` directly.
 
- Why not use symbolic link ?
- ===========================
+# Why not use symbolic link ?
 
  Because `git` don't follow symbolic links (anymore).
  I hear they can't span across filesystems... Well my laptop has only one drive and one main partition.
  Maybe they could be used in deploy mode (non-destructive), could fit the job better maybe.
 
- Is there a link with GNU stow ?
- ===============================
+# Is there a link with GNU stow ?
 
  I have to admit I wanted a simple program to be able to collect dotfiles in the same place so I can `git push` them in the clouds and then easily deploy
  them on a new machine, eventually non-destructively so I can just then -swoosh- disappear and restore it to how it was. 
- So i stumbled upon GNU stow, but I did not grok it after five minutes of reading so I went with my own thing. Seemed to work with symlinks but git does not
- follow symlinks so... I am no genius, just trying to get better at programming with system calls in C and to scratch my itch. 
- All contributions and advice are more than welcome.
+ So i stumbled upon GNU stow, but I did not grok it after five minutes of reading so I went with my own thing.
+ I am no genius, just trying to get better at programming with system calls in C and to scratch my itch. 
+ __All contributions and advice are more than welcome.__
 
- Dependancies
- ============
+#Dependencies
  The fantastic Antirez's SDS library is extensively used. So familiarize yourself with it before looking at the source code.
  I just added it as a git submodule to this repo.
 
 TODO
 ====
-.Finish deploy mode
-.How to handle if there is already a backup files created by scow ? (Ask the user to choose ?)
-.Write invade mode
-.Write takeoff mode
-.Offer an option to change the .dotfiles location ?
-.Check for allocation failures everywhere
-.Write tests ? (How ?) I'd love to use criterion.
+* Write `make_backup` for deploy mode
+* How to handle if there is already a backup files created by scow ? (Ask the user to choose ?)
+* Write takeoff mode
+* Check for allocation failures everywhere
+* Offer an option to change the .dotfiles location ?
+* Write tests ? (How ?) I'd love to use criterion. Run test in container.
 
