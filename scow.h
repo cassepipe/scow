@@ -14,7 +14,9 @@
 #include "sds/sds.h"
 #include "sds/sdsalloc.h"
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
 
 #ifndef BUFFER_SIZE
 	#define BUFFER_SIZE 2048
@@ -39,8 +41,10 @@ t_sds sdsdupcat(t_sds to_dup,const char *to_cat);
 t_sds sdsdupcatsds(t_sds to_dup,t_sds to_cat);
 int record_path(t_sds path_to_record,t_sds location);
 void ask_for_removal(char *file_path);
+void remove_wrapper(char *file_path);
+int backupfile_path(t_sds file_path);
 void link_rec(const t_sds dir_path,const t_sds dest_path);
 int setup_collect(char **items,int number_of_items,t_sds dotfiles_path);
+int setup_deploy(char **items,int number_of_items,t_sds dotfiles_path,bool backup_flag);
 e_mode parse_mode(char *mode);
 t_sds create_dotfiles_dir();
-int setup_deploy(char **items,int number_of_items,t_sds dotfiles_path);

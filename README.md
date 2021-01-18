@@ -23,6 +23,7 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
  ============================
 
  There are four modes.
+ Those are temporary names. Maybe I'll change them for load, unload, dump, sailaway or something related to scows.
 
  Collect mode
  ============
@@ -34,6 +35,14 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
  Deploy your dotfiles at the right spot by reading the hidden `.scow` files and make a backup if file already exist. If there is two or backup files, you should be
  prompted.
 
+ Invade mode
+ ===========
+ Same as deploy mode but overwrite config files already present.
+
+ Takeoff mode
+ ============
+ Restore files that were there before deployment.
+
  Why hard links and not copy ?
  =============================
 
@@ -43,6 +52,8 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
  ===========================
 
  Because `git` don't follow symbolic links (anymore).
+ I hear they can't span across filesystems... Well my laptop has only one drive and one main partition.
+ Maybe they could be used in deploy mode (non-destructive), could fit the job better maybe.
 
  Is there a link with GNU stow ?
  ===============================
@@ -64,6 +75,7 @@ TODO
 .How to handle if there is already a backup files created by scow ? (Ask the user to choose ?)
 .Write invade mode
 .Write takeoff mode
+.Offer an option to change the .dotfiles location ?
 .Check for allocation failures everywhere
-.Write tests ? (How ?)
+.Write tests ? (How ?) I'd love to use criterion.
 
