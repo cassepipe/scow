@@ -2,7 +2,9 @@ Scow
 ====
 
 __Unfinished__
+
 __Not safe for work__
+
  __All contributions and advice are more than welcome.__
 
 `scow` aims at quickly gathering and deploying config files.
