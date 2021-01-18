@@ -1,7 +1,9 @@
 Scow
 ====
 
-NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
+__Unfinished__
+__Not safe for work__
+ __All contributions and advice are more than welcome.__
 
 `scow` aims at quickly gathering and deploying config files.
 
@@ -58,11 +60,11 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
  them on a new machine, eventually non-destructively so I can just then -swoosh- disappear and restore it to how it was. 
  So i stumbled upon GNU stow, but I did not grok it after five minutes of reading so I went with my own thing.
  I am no genius, just trying to get better at programming with system calls in C and to scratch my itch. 
- __All contributions and advice are more than welcome.__
 
-#Dependencies
+# Dependencies
  The fantastic Antirez's SDS library is extensively used. So familiarize yourself with it before looking at the source code.
  I just added it as a git submodule to this repo.
+ [https://github.com/antirez/sds]
 
 TODO
 ====
