@@ -43,6 +43,12 @@ NOT READY FOR PRODUCTION. IF YOU CAN'T READ C DON'T USE IT (yet).
  ============
  Restore files that were there before deployment.
 
+ Usage
+ ====
+ ```
+ scow [mode] some_file some_dir ...
+ ```
+
  Why hard links and not copy ?
  =============================
 
