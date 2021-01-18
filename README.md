@@ -33,13 +33,13 @@ __Not safe for work__
  Deploy your dotfiles at the right spot by reading the hidden `.scow` files and make a backup if file already exist. If there is two or backup files, you should be
  prompted.
 
-##Invade mode
+## Invade mode
  Same as deploy mode but overwrite config files already present.
 
-##Takeoff mode
+## Takeoff mode
  Restore files that were there before deployment.
 
-#Usage
+# Usage
  ```
  scow [mode] file_or_dir  ...
  ```
