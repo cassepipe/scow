@@ -13,7 +13,6 @@
 	/*#define DT_DIR*/
 /*#endif*/
 
-#include <stdbool.h>
 /* Above can be removed : It's just there to make the linter happy*/
 
 /*==================== UTILS ====================*/
@@ -82,22 +81,28 @@ void remove_wrapper(char *file_path)
 
 /*==================== COLLECT ====================*/
 
-int record_path( t_sds path_to_record, t_sds location)
+t_sds give_scowfile_name(const char *path)
+{
+	t_sds scow_file;
+	char *slash;
+
+	slash = strrchr(path, '/');
+	scow_file = sdsnew(".");
+	scow_file = sdscat(scow_file, ++slash);
+	scow_file = sdscat(scow_file, ".scow");
+
+	return scow_file;
+}
+
+int record_path(const t_sds path_to_record, const char* record_name, const t_sds record_location)
 {
 	int fd;
 	int ret;
-	t_sds filename;
-	char *sep;
 	char *backupfile_path;
 
-	sep = strrchr(path_to_record, '/');
-	filename = sdsnew(".");
-	filename = sdscat(filename, ++sep);
-	filename = sdscat(filename, ".scow");
-	backupfile_path = sdsdup(location);
+	backupfile_path = sdsdup(record_location);
 	backupfile_path = sdscat(backupfile_path, "/");
-	backupfile_path = sdscatsds(backupfile_path, filename);
-	sdsfree(filename);
+	backupfile_path = sdscat(backupfile_path, record_name);
 
 	fd = creat(backupfile_path, S_IRWXU);
 	if (fd < 0)
@@ -116,7 +121,9 @@ void collect_rec(const t_sds dir_path, const t_sds dest_path)
 	struct dirent *dir_entry;
 	t_sds item_path;
 	t_sds new_item_path;
+	t_sds scow_file;
 
+	record_path(dir_path, "/.dir.scow", dest_path);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
@@ -139,7 +146,9 @@ void collect_rec(const t_sds dir_path, const t_sds dest_path)
 			if (access(new_item_path, F_OK) == 0)
 				ask_for_removal(new_item_path);
 			link(item_path, new_item_path);
-			record_path(item_path, dest_path);
+			scow_file = give_scowfile_name(item_path);
+			record_path(item_path, scow_file, dest_path);
+			sdsfree(scow_file);
 		}
 		sdsfree(item_path);
 		sdsfree(new_item_path);
@@ -153,6 +162,7 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 	char *cwd;
 	t_sds item_path;
 	t_sds new_link;
+	t_sds scow_file;
 
 	while (number_of_items--)
 	{
@@ -176,7 +186,8 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 			if (access(new_link, F_OK) == 0)
 				ask_for_removal(new_link);
 			link(item_path, new_link);
-			record_path(item_path, dotfiles_path);
+			scow_file = give_scowfile_name(item_path);
+			record_path(item_path, scow_file, dotfiles_path);
 			sdsfree(new_link);
 		}
 		else if (errno == ENOENT)
@@ -203,21 +214,20 @@ int make_backup( t_sds file_path)
 	return 1;
 }
 
-int mkdirp(t_sds path)
-{
-	return 1;
-}
-
-int deploy_rec(const t_sds dir_path, bool backup_flag)
+void deploy_rec(const t_sds dir_path, bool backup_flag)
 {
 	DIR	*dir_path_stream;
 	struct dirent *dir_entry;
 	t_sds item_path;
 	t_sds scow_file;
+	char new_dir_path[BUFFER_SIZE];
 	char new_item_path[BUFFER_SIZE];
 	int fd;
 	size_t read_count;
 
+	fd = open(".dir.scow", O_RDONLY);
+	read(fd, new_dir_path, BUFFER_SIZE);
+	mkdir(new_dir_path, 0777);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
@@ -245,8 +255,6 @@ int deploy_rec(const t_sds dir_path, bool backup_flag)
 				else
 					remove_wrapper(new_item_path);
 			}
-			else if (errno == ENOENT)
-				mkdirp(new_item_path);
 			link(item_path, new_item_path);
 			sdsfree(scow_file);
 		}
@@ -317,7 +325,6 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 		}
 		else
 		{
-			mkdirp(item_path);
 			item_path = sdscat(item_path, "/");
 			deploy_rec(item_path, dotfiles_path);
 		}
