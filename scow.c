@@ -9,9 +9,9 @@
 /* Under can be removed : Its just there to make the linter happy*/
 #define _GNU_SOURCE
 
-/*#ifndef DT_DIR*/
-	/*#define DT_DIR*/
-/*#endif*/
+#ifndef DT_DIR
+	#define DT_DIR 4
+#endif
 
 /* Above can be removed : It's just there to make the linter happy*/
 
@@ -77,7 +77,6 @@ void remove_wrapper(char *file_path)
 			exit(0);
 	}
 }
-
 
 /*==================== COLLECT ====================*/
 
