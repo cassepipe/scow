@@ -121,7 +121,7 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 			if (access(new_item_path, F_OK) == 0)
 				ask_for_removal(new_item_path);
 			link(item_path, new_item_path);
-			scow_file = give_scowfile_name(item_name);
+			scow_file = get_scowfile_name_from_sds(item_name);
 			record_path(item_path, scow_file, dotfiles_path);
 			sdsfree(scow_file);
 		}
@@ -177,7 +177,8 @@ void collect_rec(const t_sds dir_path, const t_sds dest_path)
 			if (access(new_item_path, F_OK) == 0)
 				ask_for_removal(new_item_path);
 			link(item_path, new_item_path);
-			scow_file = give_scowfile_name(item_path);
+			puts(item_path);
+			scow_file = get_scowfile_name_from_sds(item_path);
 			record_path(item_path, scow_file, dest_path);
 			sdsfree(scow_file);
 		}
@@ -191,9 +192,10 @@ int record_path(const t_sds path_to_record, const char* record_name, const t_sds
 {
 	int fd;
 	int ret;
-	char *backupfile_path;
+	t_sds backupfile_path;
 
-	backupfile_path = sdsdup(record_location);
+	backupfile_path = sdsempty();
+	backupfile_path = sdscat(backupfile_path, record_location);
 	backupfile_path = sdscat(backupfile_path, "/");
 	backupfile_path = sdscat(backupfile_path, record_name);
 
@@ -208,7 +210,7 @@ int record_path(const t_sds path_to_record, const char* record_name, const t_sds
 	return fd;
 }
 
-t_sds give_scowfile_name(const char *path)
+t_sds get_scowfile_name(const char *path)
 {
 	t_sds scow_file;
 	t_sds name;
@@ -216,10 +218,48 @@ t_sds give_scowfile_name(const char *path)
 	name = get_item_name(path);
 	scow_file = sdsnew(".");
 	scow_file = sdscatsds(scow_file, name);
-	scow_file = sdscatsds(scow_file, ".scow");
+	scow_file = sdscat(scow_file, ".scow");
 	sdsfree(name);
 
 	return scow_file;
+}
+
+t_sds get_scowfile_name_from_sds( t_sds path)
+{
+	t_sds scow_file;
+	t_sds name;
+
+	name = get_item_name_from_sds(path);
+	scow_file = sdsnew(".");
+	scow_file = sdscatsds(scow_file, name);
+	scow_file = sdscat(scow_file, ".scow");
+	sdsfree(name);
+
+	return scow_file;
+}
+
+t_sds get_item_name_from_sds( t_sds path)
+{
+	t_sds name;
+	char *slash;
+	size_t len;
+
+	len = sdslen((t_sds)path);
+	if (!len)
+		return sdsempty();
+	slash = path + len -1;
+	if (slash && *slash ==  '/')
+		slash--;
+	while (len-- && *slash != '/')
+		slash--;
+	name = sdsempty();
+	if (!len)
+		name = sdscatsds(name, path);
+	else
+		name = sdscat(name, ++slash);
+	sdstrim(name, "/");
+
+	return name;
 }
 
 t_sds get_item_name(const char* path)
@@ -228,8 +268,8 @@ t_sds get_item_name(const char* path)
 	const char *slash;
 	char len;
 
-	/*if (!path)*/
-		/*return sdsempty();*/
+	if (!path)
+		return sdsempty();
 	len = strlen(path);
 	if (!len)
 		return sdsempty();
@@ -250,6 +290,7 @@ t_sds get_item_name(const char* path)
 
 	return name;
 }
+
 
 /*  ____  _____ ____  _     _____   _ _ */
 /* |  _ \| ____|  _ \| |   / _ \ \ / /  */
@@ -384,7 +425,12 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 	return  (0);
 }
 
-/*==================== MAIN ====================*/
+/* _ _  __       _       */
+/* |  \/  | __ _(_)_ __  */
+/* | |\/| |/ _` | | '_ \ */
+/* | |  | | (_| | | | | |*/
+/* |_|  |_|\__,_|_|_| |_|*/
+
 
 e_mode parse_mode(char *mode)
 {
