@@ -33,14 +33,14 @@ ifeq ($(DEBUG), sanitizer)
 	LDFLAGS			=	-fsanitize=address
 endif
 
-CC	  		  	= 	clang
+CC	  		  	=	clang
 
 NAME			=	a.out
 
 
 #	Rules
 
-all:			${NAME}
+all:			${NAME} 
 
 ${NAME}:		${OBJECTFILES} ${HEADERFILES} update
 				${CC} ${LDFLAGS} ${OBJECTFILES}
