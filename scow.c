@@ -113,13 +113,9 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 		else
 			item_path = sdsnew(*items);
 
-		item_name = get_item_name(item_path);
-		prints(item_path);
-		prints(item_name);
-
+		item_name = get_item_name_from_sds(item_path);
 		new_item_path = sdsdup(dotfiles_path);
 		new_item_path = sdscatsds(new_item_path, item_name);
-		prints(new_item_path);
 
 		dir_path_stream = opendir(item_path);
 		if (errno == ENOTDIR)
@@ -143,13 +139,14 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 			new_item_path = sdscat(new_item_path, "/");
 			collect_rec(item_path, new_item_path);
 		}
+		sdsfree(item_path);
 		sdsfree(item_name);
 		sdsfree(new_item_path);
-		sdsfree(item_path);
 		closedir(dir_path_stream);
 		items++;
 	}
 	return  (0);
+
 }
 
 //This function assumes dir_path has already been created
@@ -254,7 +251,7 @@ t_sds get_item_name_from_sds( t_sds path)
 	len = sdslen((t_sds)path);
 	if (!len)
 		return sdsempty();
-	slash = path + len -1;
+	slash = path + len - 1;
 	if (slash && *slash ==  '/')
 		slash--;
 	while (len-- && *slash != '/')
@@ -322,8 +319,12 @@ void deploy_rec(const t_sds dir_path, bool backup_flag)
 	int fd;
 	size_t read_count;
 
+	prints(dir_path);
+	chdir(dir_path);
+	printf("Now in dir %s\n", dir_path);
 	fd = open(".dir.scow", O_RDONLY);
 	read(fd, new_dir_path, BUFFER_SIZE);
+	prints(new_dir_path);
 	mkdir(new_dir_path, 0777);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
@@ -340,17 +341,14 @@ void deploy_rec(const t_sds dir_path, bool backup_flag)
 		}
 		else
 		{
-			scow_file = sdsnew(".");
-			scow_file = sdscatsds(scow_file, item_path);
-			scow_file = sdscat(scow_file, ".scow");
+			scow_file = get_scowfile_name_from_sds(item_path);
 			fd = open(scow_file, O_RDONLY);
 			read_count = read(fd, new_item_path, BUFFER_SIZE);
 			if (access(new_item_path, F_OK) == 0)
 			{
 				if (backup_flag)
 					make_backup(new_item_path);
-				else
-					remove_wrapper(new_item_path);
+				remove_wrapper(new_item_path);
 			}
 			link(item_path, new_item_path);
 			sdsfree(scow_file);
@@ -366,8 +364,6 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 	DIR *dir_path_stream;
 	t_sds item_path;
 	t_sds scow_file;
-	char *filename;
-	char item_path_last_char;
 	int fd;
 	char new_link[BUFFER_SIZE];
 
@@ -375,13 +371,11 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 	{
 		if ((*items)[0] != '/')
 		{
+			prints(*items);
 			//Create an absolute path with dotfiles_path for current item
 			item_path = sdsdup(dotfiles_path);
 			item_path = sdscat(item_path, *items);
-			//Remove trailing '/'
-			item_path_last_char = item_path[sdslen(item_path) - 1];
-			if (item_path_last_char == '/')
-				item_path_last_char = '\0';
+			prints(item_path);
 		}
 		else
 		{
@@ -396,24 +390,20 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 		if (errno == ENOTDIR)
 		{
 			//Get scow_file name
-			filename = strrchr(item_path,'/');
-			if (!filename)
-				filename = item_path;
-			scow_file = sdsnew(".");
-			scow_file = sdscat(scow_file, filename);
-			scow_file = sdscat(scow_file, ".scow");
+			scow_file = get_scowfile_name_from_sds(item_path);
+			prints(scow_file);
 			//Read the path in hidden .scow file
 			fd = open(scow_file, O_RDONLY);
 			read(fd, new_link, BUFFER_SIZE);
+			prints(new_link);
 			if (access(new_link, F_OK) == 0)
 			{
 				if (backup_flag)
 					make_backup(new_link);
-				else
-					remove_wrapper(new_link);
+				remove_wrapper(new_link);
 			}
 			link(item_path, new_link);
-			sdsfree(new_link);
+			sdsfree(scow_file);
 		}
 		else if (errno == ENOENT)
 		{
@@ -423,10 +413,11 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 		else
 		{
 			item_path = sdscat(item_path, "/");
-			deploy_rec(item_path, dotfiles_path);
+			prints(item_path);
+			deploy_rec(item_path, backup_flag);
 		}
-		sdsfree(item_path);
 		closedir(dir_path_stream);
+		sdsfree(item_path);
 		items++;
 	}
 	return  (0);

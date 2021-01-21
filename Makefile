@@ -75,5 +75,7 @@ ctags:
 update:			ctags
 				sed -i '/FUNCTIONS/q' scow.h 
 				~/makeheaders/makeheaders -h scow.c | head -n -8 >> scow.h
+copy:	
+				cp a.out pit/a.out
 
 .PHONY:			${PHONY}	
