@@ -14,6 +14,8 @@
 	#define DT_DIR 4
 #endif
 
+#define prints(string) printf(#string ": %s\n", string)
+
 
 /* Above can be removed : It's just there to make the linter happy*/
 
@@ -111,9 +113,13 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 		else
 			item_path = sdsnew(*items);
 
-		item_name = get_item_name(item_name);
+		item_name = get_item_name(item_path);
+		prints(item_path);
+		prints(item_name);
+
 		new_item_path = sdsdup(dotfiles_path);
 		new_item_path = sdscatsds(new_item_path, item_name);
+		prints(new_item_path);
 
 		dir_path_stream = opendir(item_path);
 		if (errno == ENOTDIR)
@@ -134,7 +140,8 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 		{
 			mkdir(new_item_path, 0777);
 			item_path = sdscat(item_path, "/");
-			collect_rec(item_path, dotfiles_path);
+			new_item_path = sdscat(new_item_path, "/");
+			collect_rec(item_path, new_item_path);
 		}
 		sdsfree(item_name);
 		sdsfree(new_item_path);
@@ -145,7 +152,7 @@ int setup_collect(char **items, int number_of_items, t_sds dotfiles_path)
 	return  (0);
 }
 
-
+//This function assumes dir_path has already been created
 void collect_rec(const t_sds dir_path, const t_sds dest_path)
 {
 	DIR	*dir_path_stream;

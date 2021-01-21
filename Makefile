@@ -64,9 +64,9 @@ dotfiles_clean:
 				rm -rf ~/.dotfiles
 
 run:			dotfiles_clean	
-				./${NAME} lol
+				./${NAME} Je
 rerun:
-				./${NAME} lol
+				./${NAME} Je
 see:			
 				ls -a -R --color  ~/.dotfiles
 ctags:
