@@ -62,11 +62,6 @@ re:				fclean dotfiles_clean all
 
 dotfiles_clean:
 				rm -rf ~/.dotfiles
-
-run:			dotfiles_clean	
-				./${NAME} Je
-rerun:
-				./${NAME} Je
 see:			
 				ls -a -R --color  ~/.dotfiles
 ctags:
@@ -76,6 +71,9 @@ update:			ctags
 				sed -i '/FUNCTIONS/q' scow.h 
 				~/makeheaders/makeheaders -h scow.c | head -n -8 >> scow.h
 copy:	
-				cp a.out pit/a.out
+				cp -R ../.vim /tmp/.vim
+
+tmp_clean :		
+				rm -rf /tmp/.vim
 
 .PHONY:			${PHONY}	

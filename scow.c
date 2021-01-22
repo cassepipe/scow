@@ -82,6 +82,44 @@ void remove_wrapper(char *file_path)
 	}
 }
 
+t_sds get_scowfile_name_from_sds( t_sds path)
+{
+	t_sds scow_file;
+	t_sds name;
+
+	name = get_item_name_from_sds(path);
+	scow_file = sdsnew(".scow.");
+	scow_file = sdscatsds(scow_file, name);
+	sdsfree(name);
+
+	return scow_file;
+}
+
+t_sds get_item_name_from_sds( t_sds path)
+{
+	t_sds name;
+	char *slash;
+	size_t len;
+
+	len = sdslen((t_sds)path);
+	if (!len)
+		return sdsempty();
+	slash = path + len - 1;
+	if (slash && *slash ==  '/')
+		slash--;
+	while (len-- && *slash != '/')
+		slash--;
+	name = sdsempty();
+	if (!len)
+		name = sdscatsds(name, path);
+	else
+		name = sdscat(name, ++slash);
+	sdstrim(name, "/");
+
+	return name;
+}
+
+
 /*   _|_|_|    _|_|    _|        _|        _|_|_|_|    _|_|_|  _|_|_|_|_| */
 /* _|        _|    _|  _|        _|        _|        _|            _|     */
 /* _|        _|    _|  _|        _|        _|_|_|    _|            _|     */
@@ -158,7 +196,7 @@ void collect_rec(const t_sds dir_path, const t_sds dest_path)
 	t_sds new_item_path;
 	t_sds scow_file;
 
-	record_path(dir_path, ".dir.scow", dest_path);
+	record_path(dir_path, ".scow.dir", dest_path);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
@@ -181,7 +219,7 @@ void collect_rec(const t_sds dir_path, const t_sds dest_path)
 			if (access(new_item_path, F_OK) == 0)
 				ask_for_removal(new_item_path);
 			link(item_path, new_item_path);
-			puts(item_path);
+			printf("Linking %s to %s\n", item_path, new_item_path);
 			scow_file = get_scowfile_name_from_sds(item_path);
 			record_path(item_path, scow_file, dest_path);
 			sdsfree(scow_file);
@@ -214,88 +252,6 @@ int record_path(const t_sds path_to_record, const char* record_name, const t_sds
 	return fd;
 }
 
-t_sds get_scowfile_name(const char *path)
-{
-	t_sds scow_file;
-	t_sds name;
-
-	name = get_item_name(path);
-	scow_file = sdsnew(".");
-	scow_file = sdscatsds(scow_file, name);
-	scow_file = sdscat(scow_file, ".scow");
-	sdsfree(name);
-
-	return scow_file;
-}
-
-t_sds get_scowfile_name_from_sds( t_sds path)
-{
-	t_sds scow_file;
-	t_sds name;
-
-	name = get_item_name_from_sds(path);
-	scow_file = sdsnew(".");
-	scow_file = sdscatsds(scow_file, name);
-	scow_file = sdscat(scow_file, ".scow");
-	sdsfree(name);
-
-	return scow_file;
-}
-
-t_sds get_item_name_from_sds( t_sds path)
-{
-	t_sds name;
-	char *slash;
-	size_t len;
-
-	len = sdslen((t_sds)path);
-	if (!len)
-		return sdsempty();
-	slash = path + len - 1;
-	if (slash && *slash ==  '/')
-		slash--;
-	while (len-- && *slash != '/')
-		slash--;
-	name = sdsempty();
-	if (!len)
-		name = sdscatsds(name, path);
-	else
-		name = sdscat(name, ++slash);
-	sdstrim(name, "/");
-
-	return name;
-}
-
-t_sds get_item_name(const char* path)
-{
-	t_sds name;
-	const char *slash;
-	char len;
-
-	if (!path)
-		return sdsempty();
-	len = strlen(path);
-	if (!len)
-		return sdsempty();
-	slash = path + len - 1; //Points on char before terminating \0
-	if (*slash ==  '/')
-	{
-		slash--;
-		len--;
-	}
-	while (len-- && *slash != '/')
-		slash--;
-	name = sdsempty();
-	if (!len)
-		name = sdscat(name, path);
-	else
-		name = sdscat(name, ++slash);
-	sdstrim(name, "/");
-
-	return name;
-}
-
-
 /*  ____  _____ ____  _     _____   _ _ */
 /* |  _ \| ____|  _ \| |   / _ \ \ / /  */
 /* | | | |  _| | |_) | |  | | | \ V /   */
@@ -319,21 +275,25 @@ void deploy_rec(const t_sds dir_path, bool backup_flag)
 	int fd;
 	size_t read_count;
 
-	prints(dir_path);
 	chdir(dir_path);
 	printf("Now in dir %s\n", dir_path);
-	fd = open(".dir.scow", O_RDONLY);
+	fd = open(".scow.dir", O_RDONLY);
 	read(fd, new_dir_path, BUFFER_SIZE);
-	prints(new_dir_path);
+	close(fd);
 	mkdir(new_dir_path, 0777);
+	printf("Making %s\n", new_dir_path);
 	dir_path_stream = opendir(dir_path);
 	while ((dir_entry = readdir(dir_path_stream)) != NULL)
 	{
 		item_path = sdsdup(dir_path);
+		prints(dir_entry->d_name);
 		item_path = sdscat(item_path, dir_entry->d_name);
+		prints(item_path);
 		if (dir_entry->d_name[0] == '.'
 				&& (dir_entry->d_name[1] == '.' || dir_entry->d_name[1] == '\0'))
 			;
+		else if (!strncmp(dir_entry->d_name, ".scow.", 6))
+			printf("Ignoring scowfile %s\n", dir_entry->d_name);
 		else if (dir_entry->d_type == DT_DIR)
 		{
 			item_path = sdscat(item_path, "/");
@@ -342,6 +302,7 @@ void deploy_rec(const t_sds dir_path, bool backup_flag)
 		else
 		{
 			scow_file = get_scowfile_name_from_sds(item_path);
+			prints(scow_file);
 			fd = open(scow_file, O_RDONLY);
 			read_count = read(fd, new_item_path, BUFFER_SIZE);
 			if (access(new_item_path, F_OK) == 0)
@@ -395,6 +356,7 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 			//Read the path in hidden .scow file
 			fd = open(scow_file, O_RDONLY);
 			read(fd, new_link, BUFFER_SIZE);
+			printf("Reading path from %s\n", scow_file);
 			prints(new_link);
 			if (access(new_link, F_OK) == 0)
 			{
@@ -403,6 +365,7 @@ int setup_deploy(char **items, int number_of_items, t_sds dotfiles_path, bool ba
 				remove_wrapper(new_link);
 			}
 			link(item_path, new_link);
+			printf("Linking %s to %s\n", item_path, new_link);
 			sdsfree(scow_file);
 		}
 		else if (errno == ENOENT)
