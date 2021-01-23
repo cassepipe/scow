@@ -275,6 +275,7 @@ void deploy_rec(const t_sds dir_path, bool backup_flag)
 	int fd;
 	size_t read_count;
 
+	//Problem here this part you be in a loop
 	chdir(dir_path);
 	printf("Now in dir %s\n", dir_path);
 	fd = open(".scow.dir", O_RDONLY);
